@@ -156,8 +156,14 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                                 string destination_path = $"package_downloads/{entry.Name}";
                                 Directory.CreateDirectory(destination_path[..destination_path.LastIndexOf("\\")]);
 
-                                using var fs = File.Create(destination_path);
-                                entry.Extract(fs);
+                                using (var destination = File.Create(destination_path))
+                                using (var source = entry.Open())
+                                {
+                                    byte[] buffer = new byte[1024];
+                                    int bytesRead;
+                                    while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+                                        destination.Write(buffer, 0, bytesRead);
+                                }
                                 unpack_file.Increment(entry.UncompressedSize);
                             }
                         }

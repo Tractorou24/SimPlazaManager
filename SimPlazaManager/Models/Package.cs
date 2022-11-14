@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimPlazaManager.Extensions;
+using System;
 using System.IO;
 
 namespace SimPlazaManager.Models;
@@ -26,7 +27,14 @@ public class Package
         InstalledPath = Path.Combine(mods_folder, extracted_directory[(extracted_directory.LastIndexOf("\\") + 1)..]);
         if (Directory.Exists(InstalledPath))
             Directory.Delete(InstalledPath, true);
-        Directory.Move(extracted_directory.Replace("/", "\\"), InstalledPath);
+        try
+        {
+            Directory.Move(extracted_directory.Replace("/", "\\"), InstalledPath);
+        }
+        catch (IOException)
+        {
+            new DirectoryInfo(extracted_directory.Replace("/", "\\")).Copy(InstalledPath);
+        }
         Save();
     }
 
