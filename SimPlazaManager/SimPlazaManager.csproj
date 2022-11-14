@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -23,10 +23,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Aspose.Zip" Version="22.8.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.45" />
+		<PackageReference Include="Aspose.Zip" Version="22.10.0" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
 		<PackageReference Include="MonoTorrent" Version="2.0.6" />
-		<PackageReference Include="Spectre.Console" Version="0.44.0" />
+		<PackageReference Include="Spectre.Console" Version="0.45.0" />
+		<PackageReference Include="Spectre.Console.Cli" Version="0.45.0" />
 	</ItemGroup>
 
 </Project>
