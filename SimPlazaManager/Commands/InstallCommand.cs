@@ -178,6 +178,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                     Package pkg = new(article);
                     pkg.Install(extracted_directory);
                     pkg.Enable();
+                    Directory.Delete(extracted_directory, true);
                 }
                 install_file.Value = double.MaxValue;
                 install_file.StopTask();
