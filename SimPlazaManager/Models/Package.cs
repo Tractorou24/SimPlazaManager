@@ -1,5 +1,6 @@
 ﻿using SimPlazaManager.Extensions;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace SimPlazaManager.Models;
@@ -18,22 +19,25 @@ public class Package
     {
         Id = Guid.NewGuid();
         WebArticle = webArticle;
+        InstalledPaths = new();
     }
 
     public void Install(string extracted_directory)
     {
         string mods_folder = Settings.ModsFolder();
 
-        InstalledPath = Path.Combine(mods_folder, extracted_directory[(extracted_directory.LastIndexOf("\\") + 1)..]);
-        if (Directory.Exists(InstalledPath))
-            Directory.Delete(InstalledPath, true);
+        var installed_path = Path.Combine(mods_folder, extracted_directory[(extracted_directory.LastIndexOf("\\") + 1)..]);
+        InstalledPaths.Add(installed_path);
+        
+        if (Directory.Exists(installed_path))
+            Directory.Delete(installed_path, true);
         try
         {
-            Directory.Move(extracted_directory.Replace("/", "\\"), InstalledPath);
+            Directory.Move(extracted_directory.Replace("/", "\\"), installed_path);
         }
         catch (IOException)
         {
-            new DirectoryInfo(extracted_directory.Replace("/", "\\")).Copy(InstalledPath);
+            new DirectoryInfo(extracted_directory.Replace("/", "\\")).Copy(installed_path);
         }
         Save();
     }
@@ -44,8 +48,8 @@ public class Package
             Disable();
 
         Settings.AddOrUpdatePackage(Id, string.Empty);
-        Directory.Delete(InstalledPath, true);
-        InstalledPath = string.Empty;
+        InstalledPaths.ForEach(dir => Directory.Delete(dir, true));
+        InstalledPaths.Clear();
     }
 
     public void Upgrade(Article new_article, string extracted_directory)
@@ -64,11 +68,14 @@ public class Package
         if (IsEnabled)
             return;
 
-        if (InstalledPath.Length == 0)
-            throw new InvalidOperationException("Package is not installed.");
+        foreach (var installed_path in InstalledPaths)
+        {
+            if (installed_path.Length == 0)
+                throw new InvalidOperationException("Package is not installed.");
 
-        string community_folder = Settings.CommunityFolder();
-        Directory.CreateSymbolicLink($"{community_folder}/{InstalledPath[(InstalledPath.LastIndexOf("\\") + 1)..]}", InstalledPath);
+            string community_folder = Settings.CommunityFolder();
+            Directory.CreateSymbolicLink($"{community_folder}/{installed_path[(installed_path.LastIndexOf("\\") + 1)..]}", installed_path);
+        }
         IsEnabled = true;
         Save();
     }
@@ -78,11 +85,14 @@ public class Package
         if (!IsEnabled)
             return;
 
-        if (InstalledPath.Length == 0)
-            throw new InvalidOperationException("Package is not installed.");
+        foreach (var installed_path in InstalledPaths)
+        {
+            if (installed_path.Length == 0)
+                throw new InvalidOperationException("Package is not installed.");
 
-        string community_folder = Settings.CommunityFolder();
-        Directory.Delete($"{community_folder}/{InstalledPath[(InstalledPath.LastIndexOf("\\") + 1)..]}");
+            string community_folder = Settings.CommunityFolder();
+            Directory.Delete($"{community_folder}/{installed_path[(installed_path.LastIndexOf("\\") + 1)..]}");
+        }
         IsEnabled = false;
         Save();
     }
@@ -96,7 +106,7 @@ public class Package
     }
 
     public Guid Id { get; set; } = Guid.Empty;
-    public string InstalledPath { get; set; } = string.Empty;
+    public List<string> InstalledPaths { get; set; }
     public bool IsEnabled { get; set; } = false;
     public Article WebArticle { get; set; }
 

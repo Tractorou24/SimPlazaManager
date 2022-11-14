@@ -173,13 +173,13 @@ public class InstallCommand : Command<InstallCommand.Arguments>
 
                 // Install package and enable it
                 install_file.StartTask();
+                Package pkg = new(article);
                 foreach (string extracted_directory in Directory.EnumerateDirectories("package_downloads"))
                 {
-                    Package pkg = new(article);
                     pkg.Install(extracted_directory);
-                    pkg.Enable();
                     Directory.Delete(extracted_directory, true);
                 }
+                pkg.Enable();
                 install_file.Value = double.MaxValue;
                 install_file.StopTask();
             });
