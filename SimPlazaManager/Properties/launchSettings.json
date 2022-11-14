@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SimPlazaManager": {
+      "commandName": "Project",
+      "commandLineArgs": "install 414"
+    }
+  }
+}
