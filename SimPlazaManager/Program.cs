@@ -42,6 +42,12 @@ try
         config.AddCommand<UpgradeCommand>("upgrade")
             .WithDescription("Upgrade package(s) to latest version");
 
+        config.AddCommand<EnableCommand>("enable")
+            .WithDescription("Enable package(s)");
+
+        config.AddCommand<DisableCommand>("disable")
+            .WithDescription("Disable package(s)");
+
         config.AddCommand<ShowCommand>("show")
             .WithDescription("Find and show basic info of packages");
 
