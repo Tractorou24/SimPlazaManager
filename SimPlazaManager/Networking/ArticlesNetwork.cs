@@ -82,7 +82,7 @@ public class ArticlesNetwork
     {
         var response = await _client.GetAsync(link);
         Uri? request_uri = response.RequestMessage!.RequestUri;
-        if (request_uri is null || request_uri.ToString() != link)
+        if (request_uri is null || request_uri.ToString() == "https://www.simplaza.org/")
             return null;
 
         string html_data = await HttpGetAsync(link, progress_task);
@@ -101,7 +101,7 @@ public class ArticlesNetwork
         if (request_uri is null || request_uri.ToString() == "https://simplaza.org/")
             return null;
 
-        return await ArticleByLinkAsync(old_link, progress_task);
+        return await ArticleByLinkAsync(request_uri.ToString());
     }
 
     public static Article.ArticleDetails ArticleDetails(string article_link, ProgressTask? progress_task = null) => Task.Run(async () => await ArticleDetailsAsync(article_link, progress_task)).Result;

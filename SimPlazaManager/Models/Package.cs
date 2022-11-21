@@ -74,7 +74,7 @@ public class Package
                 throw new InvalidOperationException("Package is not installed.");
 
             string community_folder = Settings.CommunityFolder();
-            Directory.CreateSymbolicLink($"{community_folder}/{installed_path[(installed_path.LastIndexOf("\\") + 1)..]}", installed_path);
+            Directory.CreateSymbolicLink($"{community_folder}\\{installed_path[(installed_path.LastIndexOf("\\") + 1)..]}", installed_path);
         }
         IsEnabled = true;
         Save();
