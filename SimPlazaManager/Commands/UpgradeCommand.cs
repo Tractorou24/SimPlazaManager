@@ -118,8 +118,6 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                 var unpack_file = ctx.AddTask("[white]Unpacking Files[/]", false);
                 var install_file = ctx.AddTask("[white]Installing Package[/]", false);
 
-                string directory_path = string.Empty;
-
                 new DirectoryInfo("torrents").Empty();
                 foreach (string dir in Directory.EnumerateDirectories("package_downloads"))
                     Directory.Delete(dir, true);
@@ -165,7 +163,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                         {
                             using RarArchive archive = new(file.FullPath);
 
-                            directory_path = $"package_downloads/{archive.Entries.First().Name[..archive.Entries.First().Name.IndexOf("\\")]}";
+                            string directory_path = $"package_downloads/{archive.Entries.First().Name[..archive.Entries.First().Name.IndexOf("\\")]}";
                             if (Directory.Exists(directory_path))
                                 Directory.Delete(directory_path, true);
                             foreach (var entry in archive.Entries)
@@ -176,8 +174,14 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                                 string destination_path = $"package_downloads/{entry.Name}";
                                 Directory.CreateDirectory(destination_path[..destination_path.LastIndexOf("\\")]);
 
-                                using var fs = File.Create(destination_path);
-                                entry.Extract(fs);
+                                using (var destination = File.Create(destination_path))
+                                using (var source = entry.Open())
+                                {
+                                    byte[] buffer = new byte[1024];
+                                    int bytesRead;
+                                    while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+                                        destination.Write(buffer, 0, bytesRead);
+                                }
                                 unpack_file.Increment(entry.UncompressedSize);
                             }
                         }
@@ -187,12 +191,11 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
 
                 // Install package and enable it
                 install_file.StartTask();
-                if (Directory.Exists(directory_path))
-                    package.Upgrade(update_status.Item2, directory_path);
+                package.Upgrade(update_status.Item2);
                 install_file.Value = double.MaxValue;
                 install_file.StopTask();
             });
-            AnsiConsole.MarkupLine($"[green]Successfully updated {article.Name} from {package.WebArticle.Version} to {article.Version}");
+            AnsiConsole.MarkupLine($"[green]Successfully updated {article.Name} from {package.WebArticle.Version} to {article.Version}[/]");
         }
 
         if (no_one_has_updates)
