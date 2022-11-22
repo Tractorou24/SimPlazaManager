@@ -168,7 +168,7 @@ public class ArticlesNetwork
     public static async Task<string> TorrentLocalPathAsync(Article article, ProgressTask? progress_task = null)
     {
         string download_url = article.Details.Value.DownloadLink;
-        string torrent_path = $"torrents/{article.Editor}-{article.Name}-{article.Version}.torrent";
+        string torrent_path = $"torrents/{article.Editor}-{article.Name.Replace('/', ' ').Replace('\\', ' ')}-{article.Version}.torrent";
         if (!File.Exists(torrent_path))
         {
             byte[] file_bytes = await HttpGetBytesAsync(download_url, progress_task);
