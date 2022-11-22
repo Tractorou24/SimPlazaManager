@@ -9,13 +9,6 @@ public class TorrentDownloader
     public void Download()
     {
         Task task = DownloadTask(_cancellation.Token);
-
-        // Torrents must be closed properly, deny all close events ans crashed until torrents running
-        Console.CancelKeyPress += delegate { _cancellation.Cancel(); task.Wait(); };
-        AppDomain.CurrentDomain.ProcessExit += delegate { _cancellation.Cancel(); task.Wait(); };
-        AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e) { Console.WriteLine(e.ExceptionObject); _cancellation.Cancel(); task.Wait(); };
-        Thread.GetDomain().UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e) { Console.WriteLine(e.ExceptionObject); _cancellation.Cancel(); task.Wait(); };
-
         task.Wait();
     }
 
