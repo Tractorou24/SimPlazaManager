@@ -1,5 +1,6 @@
-﻿using Aspose.Zip.Rar;
-using MonoTorrent.Client;
+﻿using MonoTorrent.Client;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Rar;
 using SimPlazaManager.Extensions;
 using SimPlazaManager.Models;
 using SimPlazaManager.Networking;
@@ -137,34 +138,46 @@ public class InstallCommand : Command<InstallCommand.Arguments>
 
                 // Unpack downloaded RAR file from torrent
                 unpack_file.StartTask();
-                unpack_file.MaxValue = _data.Engine.Torrents.Sum(x => x.Files.Sum(y => new RarArchive(y.FullPath).Entries.Sum(z => (double)z.UncompressedSize)));
+                unpack_file.MaxValue = _data.Engine.Torrents.Sum(x => x.Files.Sum(y =>
+                {
+                    int maxAttempts = 10, attemptNb = 1;
+                    while (attemptNb < maxAttempts)
+                    {
+                        try
+                        {
+                            using RarArchive rarArchive = RarArchive.Open(y.FullPath);
+                            return rarArchive.TotalUncompressSize;
+                        }
+                        catch (IOException)
+                        {
+                            System.Threading.Thread.Sleep(100);
+                            attemptNb++;
+                        }
+                    }
+                    return double.MaxValue;
+                }));
                 lock (_data)
                 {
                     foreach (TorrentManager torrent in _data.Engine.Torrents)
                         foreach (ITorrentFileInfo file in torrent.Files)
                         {
-                            using RarArchive archive = new(file.FullPath);
+                            using RarArchive archive = RarArchive.Open(file.FullPath);
 
-                            string directory_path = $"package_downloads/{archive.Entries.First().Name[..archive.Entries.First().Name.IndexOf("\\")]}";
+                            string directory_path = $"package_downloads/{archive.Entries.First().Key[..archive.Entries.First().Key.IndexOf("\\")]}";
                             if (Directory.Exists(directory_path))
                                 Directory.Delete(directory_path, true);
+
                             foreach (var entry in archive.Entries)
                             {
                                 if (entry.IsDirectory)
                                     continue;
 
-                                string destination_path = $"package_downloads/{entry.Name}";
+                                string destination_path = $"package_downloads\\{entry.Key}";
                                 Directory.CreateDirectory(destination_path[..destination_path.LastIndexOf("\\")]);
 
-                                using (var destination = File.Create(destination_path))
-                                using (var source = entry.Open())
-                                {
-                                    byte[] buffer = new byte[1024];
-                                    int bytesRead;
-                                    while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
-                                        destination.Write(buffer, 0, bytesRead);
-                                }
-                                unpack_file.Increment(entry.UncompressedSize);
+                                using var destination = File.Create(destination_path);
+                                entry.WriteTo(destination);
+                                unpack_file.Increment(destination.Length);
                             }
                         }
                 }
