@@ -18,11 +18,13 @@ COMMANDS:
     install <QUERY/LINK>    Installs the given packages
     uninstall               Uninstalls the given packages
     upgrade                 Upgrade package(s) to latest version
+    enable                  Enable package(s)
+    disable                 Disable package(s)
     show <QUERY/LINK>       Find and show basic info of packages
     search                  Search for a package
     list                    Display installed packages
     clean                   Clean temporary folders (save disk space)
-    settings                Set mods and community folder path
+    settings                Set mods and community folder path```
 ```
 
 ## Contribute
