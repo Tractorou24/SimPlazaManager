@@ -52,13 +52,19 @@ public class Package
         InstalledPaths.Clear();
     }
 
-    public void Upgrade(Article new_article, string extracted_directory)
+    public void Upgrade(Article new_article)
     {
         WebArticle = new_article;
         bool was_enabled = IsEnabled;
 
         Uninstall();
-        Install(extracted_directory);
+
+        foreach (string extracted_directory in Directory.EnumerateDirectories("package_downloads"))
+        {
+            Install(extracted_directory);
+            Directory.Delete(extracted_directory, true);
+        }
+
         if (was_enabled)
             Enable();
     }
