@@ -45,7 +45,7 @@ internal class StandardDownloader
         foreach (TorrentManager manager in Engine.Torrents)
             await manager.StartAsync();
 
-        while (Engine.IsRunning)
+        while (Engine.IsRunning && !token.IsCancellationRequested)
         {
             DisplayTorrentData data = new()
             {

@@ -12,6 +12,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -134,6 +135,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
 
                 // Download package from torrent
                 download_package.StartTask();
+                _data.Engine = null;
                 Networking.Torrents.TorrentDownloader downloader = new();
                 downloader.DisplayRequested += RenderDownloadData;
                 Task.Run(() => downloader.Download());
@@ -152,6 +154,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                 }
                 download_package.Value = double.MaxValue;
                 download_package.StopTask();
+                downloader.Cancel();
                 new DirectoryInfo("torrents").Empty();
 
                 // Unpack downloaded RAR file from torrent
