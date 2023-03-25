@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using System.Xml;
 
 namespace SimPlazaManager.Networking;
 
@@ -140,9 +141,24 @@ public class ArticlesNetwork
             info = "No info provided.";
 
         // Download Link
-        HtmlNode iframe_node = article_node.SelectNodes(".//iframe").First(node => node.ParentNode.ParentNode.InnerText.Split("\n").First() == "Torrent");
-        string iframe_html_data = await HttpGetAsync($"http://simplaza.org/{iframe_node.Attributes["src"].Value}");
-        string torrent_link = new HtmlDocument().NodeFromRawString(iframe_html_data).SelectSingleNode("//h2//a").Attributes["href"].Value;
+        string torrent_link = string.Empty;
+        var items = new XmlDocument().GetItems(HttpGet("https://simplaza.org/torrent/rss.xml"));
+        for (int i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            if (item is null)
+                continue;
+
+            string searcheable_link = article_link;
+            if (searcheable_link.EndsWith('/'))
+                article_link = article_link[0..(article_link.Length - 1)];
+
+            if (item.InnerXml.Contains(searcheable_link))
+            {
+                torrent_link = item.SelectSingleNode("enclosure").Attributes["url"].InnerText;
+                break;
+            }
+        }
 
         return new Article.ArticleDetails
         {
@@ -201,7 +217,7 @@ public class ArticlesNetwork
     {
         foreach (HtmlNode article in article_nodes)
         {
-            HtmlNode article_node = article.SelectSingleNode(".//div[@class='nv-post-thumbnail-wrap']//a");
+            HtmlNode article_node = article.SelectSingleNode(".//div[@class='nv-post-thumbnail-wrap img-wrap']//a");
 
             try
             {

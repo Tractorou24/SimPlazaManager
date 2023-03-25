@@ -19,4 +19,10 @@ public static class XmlDocumentExtensions
         document.LoadXml(w.ToString());
         return document;
     }
+
+    public static XmlNodeList GetItems(this XmlDocument document, string xml)
+    {
+        document.LoadXml(xml);
+        return document.GetElementsByTagName("item");
+    }
 }
