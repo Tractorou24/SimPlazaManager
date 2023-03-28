@@ -154,8 +154,8 @@ public static class Settings
         return results.DistinctBy(x => x.WebArticle.ToString()).ToList();
     }
 
-    static readonly string _settings_path = "settings.xml";
-    static readonly string _packages_path = "packages.xml";
+    static readonly string _settings_path = AppDomain.CurrentDomain.BaseDirectory + "settings.xml";
+    static readonly string _packages_path = AppDomain.CurrentDomain.BaseDirectory + "packages.xml";
     static readonly XmlDocument _settings = new XmlDocument().LoadXmlFromFile(_settings_path);
     static readonly XmlDocument _packages = new XmlDocument().LoadXmlFromFile(_packages_path);
 }
