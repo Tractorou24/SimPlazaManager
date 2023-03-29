@@ -155,6 +155,12 @@ public class ArticlesNetwork
 
             if (item.InnerXml.Contains(searcheable_link))
             {
+                HtmlNode doc = new HtmlDocument().NodeFromRawString(item.SelectSingleNode("description").InnerText);
+
+                string link = doc.SelectSingleNode("//a").Attributes["href"].Value;
+                if (link != searcheable_link || link != article_link)
+                    continue;
+                
                 torrent_link = item.SelectSingleNode("enclosure").Attributes["url"].InnerText;
                 break;
             }
