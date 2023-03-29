@@ -24,7 +24,8 @@ public class TorrentDownloader
             AllowPortForwarding = true,
             AutoSaveLoadDhtCache = true,
             AutoSaveLoadFastResume = true,
-            AutoSaveLoadMagnetLinkMetadata = true
+            AutoSaveLoadMagnetLinkMetadata = true,
+            CacheDirectory = AppDomain.CurrentDomain.BaseDirectory + "cache"
         };
 
         MonoTorrent.Client.ClientEngine engine = new(settings_builder.ToSettings());

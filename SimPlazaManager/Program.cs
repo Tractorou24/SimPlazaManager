@@ -3,13 +3,14 @@ using SimPlazaManager.Commands;
 using SimPlazaManager.Extensions;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System;
 using System.IO;
 
 static void InitializeFileStructure()
 {
-    Directory.CreateDirectory("torrents").Empty();
-    Directory.CreateDirectory("images").Empty();
-    Directory.CreateDirectory("package_downloads");
+    Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "torrents").Empty();
+    Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "images").Empty();
+    Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "package_downloads");
 }
 
 try

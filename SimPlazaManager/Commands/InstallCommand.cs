@@ -134,7 +134,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                 }
                 download_package.Value = double.MaxValue;
                 download_package.StopTask();
-                new DirectoryInfo("torrents").Empty();
+                new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory + "torrents").Empty();
 
                 // Unpack downloaded RAR file from torrent
                 unpack_file.StartTask();
@@ -163,7 +163,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                         {
                             using RarArchive archive = RarArchive.Open(file.FullPath);
 
-                            string directory_path = $"package_downloads/{archive.Entries.First().Key[..archive.Entries.First().Key.IndexOf("\\")]}";
+                            string directory_path = AppDomain.CurrentDomain.BaseDirectory + $"package_downloads/{archive.Entries.First().Key[..archive.Entries.First().Key.IndexOf("\\")]}";
                             if (Directory.Exists(directory_path))
                                 Directory.Delete(directory_path, true);
 
@@ -172,7 +172,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                                 if (entry.IsDirectory)
                                     continue;
 
-                                string destination_path = $"package_downloads\\{entry.Key}";
+                                string destination_path = AppDomain.CurrentDomain.BaseDirectory + $"package_downloads\\{entry.Key}";
                                 Directory.CreateDirectory(destination_path[..destination_path.LastIndexOf("\\")]);
 
                                 using var destination = File.Create(destination_path);
@@ -187,7 +187,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                 // Install package and enable it
                 install_file.StartTask();
                 Package pkg = new(article);
-                foreach (string extracted_directory in Directory.EnumerateDirectories("package_downloads"))
+                foreach (string extracted_directory in Directory.EnumerateDirectories(AppDomain.CurrentDomain.BaseDirectory + "package_downloads"))
                 {
                     pkg.Install(extracted_directory);
                     Directory.Delete(extracted_directory, true);

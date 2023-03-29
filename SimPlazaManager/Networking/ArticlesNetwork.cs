@@ -177,7 +177,7 @@ public class ArticlesNetwork
     public static string ImageLocalPath(string image_url, ProgressTask? progress_task) => Task.Run(async () => await ImageLocalPathAsync(image_url, progress_task)).Result;
     public static async Task<string> ImageLocalPathAsync(string image_url, ProgressTask? progress_task)
     {
-        string image_path = $"images/{image_url.AsSpan(image_url.LastIndexOf("/") + 1)}";
+        string image_path = AppDomain.CurrentDomain.BaseDirectory + $"images/{image_url.AsSpan(image_url.LastIndexOf("/") + 1)}";
         if (File.Exists(image_path))
             return image_path;
 
@@ -190,7 +190,7 @@ public class ArticlesNetwork
     public static async Task<string> TorrentLocalPathAsync(Article article, ProgressTask? progress_task = null)
     {
         string download_url = article.Details.Value.DownloadLink;
-        string torrent_path = $"torrents/{article.Editor}-{article.Name.Replace('/', ' ').Replace('\\', ' ')}-{article.Version}.torrent";
+        string torrent_path = AppDomain.CurrentDomain.BaseDirectory + $"torrents/{article.Editor}-{article.Name.Replace('/', ' ').Replace('\\', ' ')}-{article.Version}.torrent";
         if (!File.Exists(torrent_path))
         {
             byte[] file_bytes = await HttpGetBytesAsync(download_url, progress_task);

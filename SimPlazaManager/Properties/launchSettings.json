@@ -2,7 +2,7 @@
   "profiles": {
     "SimPlazaManager": {
       "commandName": "Project",
-      "commandLineArgs": "install 414"
+      "commandLineArgs": "install lfth"
     }
   }
 }

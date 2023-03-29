@@ -120,8 +120,8 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                 var unpack_file = ctx.AddTask("[white]Unpacking Files[/]", false);
                 var install_file = ctx.AddTask("[white]Installing Package[/]", false);
 
-                new DirectoryInfo("torrents").Empty();
-                foreach (string dir in Directory.EnumerateDirectories("package_downloads"))
+                new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory + "torrents").Empty();
+                foreach (string dir in Directory.EnumerateDirectories(AppDomain.CurrentDomain.BaseDirectory + "package_downloads"))
                     Directory.Delete(dir, true);
 
                 if (!article.Details.IsValueCreated)
@@ -155,7 +155,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                 download_package.Value = double.MaxValue;
                 download_package.StopTask();
                 downloader.Cancel();
-                new DirectoryInfo("torrents").Empty();
+                new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory + "torrents").Empty();
 
                 // Unpack downloaded RAR file from torrent
                 unpack_file.StartTask();
@@ -184,7 +184,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                         {
                             using RarArchive archive = RarArchive.Open(file.FullPath);
 
-                            string directory_path = $"package_downloads/{archive.Entries.First().Key[..archive.Entries.First().Key.IndexOf("\\")]}";
+                            string directory_path = AppDomain.CurrentDomain.BaseDirectory + $"package_downloads/{archive.Entries.First().Key[..archive.Entries.First().Key.IndexOf("\\")]}";
                             if (Directory.Exists(directory_path))
                                 Directory.Delete(directory_path, true);
                             foreach (var entry in archive.Entries)
@@ -192,7 +192,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                                 if (entry.IsDirectory)
                                     continue;
 
-                                string destination_path = $"package_downloads/{entry.Key}";
+                                string destination_path = AppDomain.CurrentDomain.BaseDirectory + $"package_downloads/{entry.Key}";
                                 Directory.CreateDirectory(destination_path[..destination_path.LastIndexOf("\\")]);
 
                                 using var destination = File.Create(destination_path);

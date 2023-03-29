@@ -59,7 +59,7 @@ public class Package
 
         Uninstall();
 
-        foreach (string extracted_directory in Directory.EnumerateDirectories("package_downloads"))
+        foreach (string extracted_directory in Directory.EnumerateDirectories(AppDomain.CurrentDomain.BaseDirectory + "package_downloads"))
         {
             Install(extracted_directory);
             Directory.Delete(extracted_directory, true);

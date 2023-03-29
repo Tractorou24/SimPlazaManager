@@ -18,8 +18,8 @@ internal class StandardDownloader
 
     public async Task DownloadAsync(CancellationToken token)
     {
-        string download_path = Path.Combine(Environment.CurrentDirectory, "package_downloads");
-        string torrents_path = Path.Combine(Environment.CurrentDirectory, "torrents");
+        string download_path = Path.Combine(Environment.CurrentDirectory, AppDomain.CurrentDomain.BaseDirectory + "package_downloads");
+        string torrents_path = Path.Combine(Environment.CurrentDirectory, AppDomain.CurrentDomain.BaseDirectory + "torrents");
 
         if (!Directory.Exists(torrents_path))
             Directory.CreateDirectory(torrents_path);
