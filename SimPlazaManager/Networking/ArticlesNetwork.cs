@@ -151,14 +151,14 @@ public class ArticlesNetwork
 
             string searcheable_link = article_link;
             if (searcheable_link.EndsWith('/'))
-                article_link = article_link[0..(article_link.Length - 1)];
+                searcheable_link = article_link[0..(article_link.Length - 1)];
 
             if (item.InnerXml.Contains(searcheable_link))
             {
                 HtmlNode doc = new HtmlDocument().NodeFromRawString(item.SelectSingleNode("description").InnerText);
 
                 string link = doc.SelectSingleNode("//a").Attributes["href"].Value;
-                if (link != searcheable_link || link != article_link)
+                if (link != searcheable_link && link != article_link)
                     continue;
                 
                 torrent_link = item.SelectSingleNode("enclosure").Attributes["url"].InnerText;
