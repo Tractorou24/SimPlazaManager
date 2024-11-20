@@ -141,6 +141,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                 Task.Run(() => downloader.Download());
 
                 while (_data.Engine is null) { } // Wait until first engine is sent
+                while (!_data.Engine.Torrents.All(x => x.Size > 0)) { } // Wait until all torrents have a size
 
                 lock (_data)
                     download_package.MaxValue = _data.Engine.Torrents.Sum(x => x.Torrent.Size);

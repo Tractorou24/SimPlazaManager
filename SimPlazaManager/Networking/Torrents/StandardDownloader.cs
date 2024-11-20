@@ -27,6 +27,7 @@ internal class StandardDownloader
         // Add torrents to engine
         foreach (string file in Directory.GetFiles(torrents_path))
             if (file.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase))
+            {
                 try
                 {
                     Torrent torrent = await Torrent.LoadAsync(file);
@@ -37,6 +38,13 @@ internal class StandardDownloader
                     Console.Write("Couldn't download {0}: ", file);
                     Console.WriteLine(e.Message);
                 }
+            }
+            else if (file.EndsWith(".magnet", StringComparison.OrdinalIgnoreCase))
+            {
+                string magnet_str = await File.ReadAllTextAsync(file, token);
+                var magnet = MagnetLink.Parse(magnet_str);
+                await Engine.AddAsync(magnet, download_path);
+            }
 
         if (Engine.Torrents.Count == 0)
             return;
@@ -58,6 +66,7 @@ internal class StandardDownloader
     }
 
     public event EventHandler<DisplayTorrentData>? DisplayRequested;
+
     protected virtual void SendDownloadInfos(DisplayTorrentData args)
     {
         DisplayRequested?.Invoke(this, args);
