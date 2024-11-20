@@ -5,47 +5,24 @@ using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using System.Xml;
 
 namespace SimPlazaManager.Networking;
 
 public class ArticlesNetwork
 {
-    public static ulong MaxPage() => Task.Run(async () => await MaxPageAsync()).Result;
-
-    public static async Task<ulong> MaxPageAsync()
-    {
-        ulong max = 1;
-
-        foreach (string url in _urls)
-        {
-            string html_data = await HttpGetAsync(string.Format(url, "page/1/"));
-            HtmlNode document_node = new HtmlDocument().NodeFromRawString(html_data);
-
-            HtmlNode numbers = document_node.SelectSingleNode("//ul[@class='page-numbers']");
-            foreach (HtmlNode nb_node in numbers.ChildNodes)
-                if (ulong.TryParse(nb_node.InnerText, out ulong tmp))
-                    max = Math.Max(max, tmp);
-        }
-
-        return max;
-    }
-
     public static ulong MaxPageByQuery(string query) => Task.Run(async () => await MaxPageByQueryAsync(query)).Result;
 
     public static async Task<ulong> MaxPageByQueryAsync(string query)
     {
         ulong max = 1;
 
-        foreach (string url in _urls)
+        foreach (ISource source in _sources)
         {
-            string html_data = await HttpGetAsync(string.Format(url, $"?s={HttpUtility.UrlEncode(query)}"));
+            string html_data = await Networking.HttpGetAsync(source.Address + $"/?s={HttpUtility.UrlEncode(query)}");
             HtmlNode document_node = new HtmlDocument().NodeFromRawString(html_data);
 
             HtmlNode numbers = document_node.SelectSingleNode("//ul[@class='page-numbers']");
@@ -64,15 +41,15 @@ public class ArticlesNetwork
     {
         IList<Article> articles = new List<Article>();
 
-        foreach (string url in _urls)
+        foreach (ISource source in _sources)
         {
-            string str = string.Format(url, $"/page/{page}/?s={HttpUtility.UrlEncode(query)}");
-            string html_data = HttpGet(str, progress_task);
+            string str = source.Address + $"/page/{page}/?s={HttpUtility.UrlEncode(query)}";
+            string html_data = Networking.HttpGet(str, progress_task);
             var main_node = new HtmlDocument().NodeFromRawString(html_data);
 
             var nodes = main_node.SelectNodes("//article");
             if (nodes is null)
-                return null;
+                continue;
 
             ParseArticles(nodes, ref articles);
         }
@@ -87,9 +64,9 @@ public class ArticlesNetwork
         IList<Article> articles = new List<Article>();
         Parallel.For(page_start, page_end, (current_page) =>
         {
-            foreach (string url in _urls)
+            foreach (ISource source in _sources)
             {
-                string html_data = HttpGet(string.Format(url, $"page/{current_page}/"));
+                string html_data = Networking.HttpGet(source.Address + $"/page/{current_page}/");
                 var article_nodes = new HtmlDocument().NodeFromRawString(html_data).SelectNodes("//article");
 
                 ParseArticles(article_nodes, ref articles);
@@ -107,7 +84,7 @@ public class ArticlesNetwork
         if (request_uri is null || request_uri.ToString() == "https://sceneryaddons.org/")
             return null;
 
-        string html_data = await HttpGetAsync(link, progress_task);
+        string html_data = await Networking.HttpGetAsync(link, progress_task);
         if (html_data.Length == 0)
             return null;
 
@@ -133,64 +110,19 @@ public class ArticlesNetwork
 
     public static async Task<Article.ArticleDetails> ArticleDetailsAsync(string article_link, ProgressTask? progress_task = null)
     {
-        HtmlNode article_node1 = new HtmlDocument().NodeFromRawString(await HttpGetAsync(article_link, progress_task));
+        HtmlNode article_node1 = new HtmlDocument().NodeFromRawString(await Networking.HttpGetAsync(article_link, progress_task));
         HtmlNode article_node = article_node1.SelectSingleNode(".//article");
+        ISource source = SourceFromLink(article_link);
 
-        // Description
-        HtmlNodeCollection possible_description_boxes =
-            article_node.SelectNodes("//div[@class='su-spoiler su-spoiler-style-fancy su-spoiler-icon-plus-square-1 su-spoiler-closed']");
-        string description = string.Empty;
-        foreach (var box in possible_description_boxes)
-        {
-            var title_node = box.SelectSingleNode(".//div[@class='su-spoiler-title']");
-            if (title_node is null || title_node.InnerText != "Description")
-                continue;
-            foreach (var text in box.SelectSingleNode(".//div[@class='su-spoiler-content su-u-clearfix su-u-trim']").ChildNodes)
-                description += text.InnerText + "\n";
-        }
-
-        // Info
-        var boxes_nodes = article_node.SelectNodes("//div[@class='su-box su-box-style-default']");
-        string info = string.Empty;
-        foreach (var box in boxes_nodes)
-        {
-            string inner_text = box.SelectSingleNode(".//div[@class='su-box-title']").InnerText;
-            if (inner_text == "Info")
-                foreach (var text in box.ChildNodes)
-                    if (text.InnerText != "Info")
-                        info += text.InnerText + "\n";
-        }
+        string description = source.Description(article_node);
+        string info = source.Info(article_node);
 
         if (description.Length == 0)
             description = "No description provided.";
         if (info.Length == 0)
             info = "No info provided.";
 
-        // Download Link
-        string torrent_link = string.Empty;
-        var items = new XmlDocument().GetItems(HttpGet("https://sceneryaddons.org/torrent/rss.xml"));
-        for (int i = 0; i < items.Count; i++)
-        {
-            var item = items[i];
-            if (item is null)
-                continue;
-
-            string searcheable_link = article_link;
-            if (searcheable_link.EndsWith('/'))
-                searcheable_link = article_link[0..(article_link.Length - 1)];
-
-            if (item.InnerXml.Contains(searcheable_link))
-            {
-                HtmlNode doc = new HtmlDocument().NodeFromRawString(item.SelectSingleNode("description").InnerText);
-
-                string link = doc.SelectSingleNode("//a").Attributes["href"].Value;
-                if (link != searcheable_link && link != article_link)
-                    continue;
-
-                torrent_link = item.SelectSingleNode("enclosure").Attributes["url"].InnerText;
-                break;
-            }
-        }
+        string torrent_link = source.Link(article_node, article_link);
 
         return new Article.ArticleDetails
         {
@@ -200,32 +132,27 @@ public class ArticlesNetwork
         };
     }
 
-    public static string ImageLocalPath(string image_url, ProgressTask? progress_task) => Task.Run(async () => await ImageLocalPathAsync(image_url, progress_task)).Result;
-
-    public static async Task<string> ImageLocalPathAsync(string image_url, ProgressTask? progress_task)
-    {
-        string image_path = AppDomain.CurrentDomain.BaseDirectory + $"images/{image_url.AsSpan(image_url.LastIndexOf("/") + 1)}";
-        if (File.Exists(image_path))
-            return image_path;
-
-        byte[] image_content = await HttpGetBytesAsync(image_url, progress_task);
-        await File.WriteAllBytesAsync(image_path, image_content);
-        return image_path;
-    }
-
     public static string TorrentLocalPath(Article article, ProgressTask? progress_task = null) => Task.Run(async () => await TorrentLocalPathAsync(article, progress_task)).Result;
 
     public static async Task<string> TorrentLocalPathAsync(Article article, ProgressTask? progress_task = null)
     {
         string download_url = article.Details.Value.DownloadLink;
-        string torrent_path = AppDomain.CurrentDomain.BaseDirectory + $"torrents/{article.Editor}-{article.Name.Replace('/', ' ').Replace('\\', ' ')}-{article.Version}.torrent";
+        string torrent_path = AppDomain.CurrentDomain.BaseDirectory + $"torrents/{article.Editor}-{article.Name.Replace('/', ' ').Replace('\\', ' ')}-{article.Version}.";
+
         if (!File.Exists(torrent_path))
         {
-            byte[] file_bytes = await HttpGetBytesAsync(download_url, progress_task);
-            if (file_bytes.Length == 0)
-                return string.Empty;
+            if (download_url.StartsWith("magnet"))
+            {
+                await File.WriteAllTextAsync(torrent_path + "magnet", download_url);
+            }
+            else
+            {
+                byte[] file_bytes = await Networking.HttpGetBytesAsync(download_url, progress_task);
+                if (file_bytes.Length == 0)
+                    return string.Empty;
 
-            await File.WriteAllBytesAsync(torrent_path, file_bytes);
+                await File.WriteAllBytesAsync(torrent_path + "torrent", file_bytes);
+            }
         }
         else if (progress_task is not null) progress_task.Value = double.MaxValue;
 
@@ -305,41 +232,24 @@ public class ArticlesNetwork
         return null;
     }
 
-    private static string HttpGet(string url, ProgressTask? progress_task = null) => Task.Run(async () => await HttpGetAsync(url, progress_task)).Result;
-    private static async Task<string> HttpGetAsync(string url, ProgressTask? progress_task = null) => Encoding.UTF8.GetString(await HttpGetBytesAsync(url, progress_task));
-
-    private static async Task<byte[]> HttpGetBytesAsync(string url, ProgressTask? progress_task = null)
+    private static ISource SourceFromLink(string link)
     {
-        if (progress_task is null)
-            return await (await _client.GetAsync(url)).Content.ReadAsByteArrayAsync();
-
-        using HttpResponseMessage response = await _client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-        response.EnsureSuccessStatusCode();
-
-        progress_task.MaxValue(response.Content.Headers.ContentLength ?? (await response.Content.ReadAsStringAsync()).Length);
-        progress_task.StartTask();
-
-        byte[] buffer = new byte[128];
-        await using var content_stream = await response.Content.ReadAsStreamAsync();
-        using var memory_stream = new MemoryStream((int)(response.Content.Headers.ContentLength ?? 0));
-
-        while (true)
+        ISource result = null;
+        uint counter = 0;
+        foreach (ISource source in _sources)
         {
-            int read_bytes = await content_stream.ReadAsync(buffer);
-            if (read_bytes == 0)
+            if (link.Contains(source.Address))
             {
-                progress_task.Value = double.MaxValue;
-                break;
+                result = source;
+                counter++;
             }
-
-            await memory_stream.WriteAsync(buffer.AsMemory(0, read_bytes));
-            progress_task.Increment(read_bytes);
         }
 
-        progress_task.Value = double.MaxValue;
-        return memory_stream.ToArray();
+        if (counter != 1)
+            throw new Exception($"None or multiple sources (count={counter}) for link {link} was found.");
+        return result;
     }
 
-    private static readonly string[] _urls = ["https://sceneryaddons.org/{0}", "https://simplaza.org/{0}"];
+    private static readonly ISource[] _sources = [new SimPlaza(), new SceneryAddons()];
     private static readonly HttpClient _client = new();
 }
