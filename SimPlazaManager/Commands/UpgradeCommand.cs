@@ -83,7 +83,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
                     break;
                 case 2:
                     AnsiConsole.MarkupLine("[bold red]Unable to find package[/] in SimPlaza, it may be deleted. Continuing...");
-                    return 2;
+                    continue;
             }
 
             if (!has_update)
@@ -228,7 +228,7 @@ public class UpgradeCommand : Command<UpgradeCommand.Arguments>
 
             table.Columns[3].NoWrap();
             foreach (var article in articles_list)
-                table.AddRow(article.Editor, article.Name, article.Version.ToString(), $"Open in [link={article.Link}]SimPlaza[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/]");
+                table.AddRow(article.Editor, article.Name, article.Version.ToString(), $"Open in [link={article.Link}]browser[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/]");
             table.Expand();
 
             AnsiConsole.Clear();

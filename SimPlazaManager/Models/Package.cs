@@ -7,13 +7,9 @@ namespace SimPlazaManager.Models;
 
 public class Package
 {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value. Used only for XML parsing
-    internal Package()
+    public Package()
     {
-        if (new System.Diagnostics.StackTrace().GetFrame(1)!.GetMethod()!.Name != "InvokeMethod")
-            throw new InvalidOperationException("This constructor is only for XML parsing.");
     }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value. Used only for XML parsing
 
     public Package(Article webArticle)
     {

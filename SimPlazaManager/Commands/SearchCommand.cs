@@ -77,7 +77,7 @@ public class SearchCommand : Command<SearchCommand.Arguments>
 
         table.Columns[3].NoWrap();
         foreach (var article in articles)
-            table.AddRow(article.Editor, article.Name, article.Version.ToString(), $"Open in [link={article.Link}]SimPlaza[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/]");
+            table.AddRow(article.Editor, article.Name, article.Version.ToString(), $"Open in [link={article.Link}]browser[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/]");
         table.Expand();
 
         AnsiConsole.Write(table);

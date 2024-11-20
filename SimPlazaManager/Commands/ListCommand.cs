@@ -62,7 +62,7 @@ public class ListCommand : Command<ListCommand.Arguments>
 
         table.Columns[3].NoWrap();
         foreach (var pkg in packages)
-            table.AddRow(pkg.WebArticle.Editor, pkg.WebArticle.Name, pkg.WebArticle.Version.ToString(), pkg.IsEnabled ? "Yes" : "No", $"Open in [link={pkg.WebArticle.Link}]SimPlaza[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(pkg.WebArticle.Name)}]Google Maps[/]");
+            table.AddRow(pkg.WebArticle.Editor, pkg.WebArticle.Name, pkg.WebArticle.Version.ToString(), pkg.IsEnabled ? "Yes" : "No", $"Open in [link={pkg.WebArticle.Link}]browser[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(pkg.WebArticle.Name)}]Google Maps[/]");
         table.Expand();
 
         AnsiConsole.Write(table);

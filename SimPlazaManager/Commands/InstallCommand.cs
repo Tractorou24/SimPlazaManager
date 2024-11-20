@@ -45,7 +45,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                 var get_article = ctx.AddTask("[white]Getting SimPlaza Article(s)[/]", false);
 
                 get_article.StartTask();
-                if (args.Query.StartsWith("https://simplaza.org"))
+                if (args.Query.StartsWith("https://sceneryaddons.org"))
                     article = ArticlesNetwork.ArticleByLink(args.Query, get_article);
                 else
                     possibilities = ArticlesNetwork.ArticlesByQuery(args.Query, progress_task: get_article);

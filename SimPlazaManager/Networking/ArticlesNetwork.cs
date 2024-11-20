@@ -18,33 +18,45 @@ namespace SimPlazaManager.Networking;
 public class ArticlesNetwork
 {
     public static ulong MaxPage() => Task.Run(async () => await MaxPageAsync()).Result;
+
     public static async Task<ulong> MaxPageAsync()
     {
-        string html_data = await HttpGetAsync(string.Format(_url, "page/1/"));
-        HtmlNode document_node = new HtmlDocument().NodeFromRawString(html_data);
-
         ulong max = 1;
-        HtmlNode numbers = document_node.SelectSingleNode("//ul[@class='page-numbers']");
-        foreach (HtmlNode nb_node in numbers.ChildNodes)
-            if (ulong.TryParse(nb_node.InnerText, out ulong tmp))
-                max = Math.Max(max, tmp);
+
+        foreach (string url in _urls)
+        {
+            string html_data = await HttpGetAsync(string.Format(url, "page/1/"));
+            HtmlNode document_node = new HtmlDocument().NodeFromRawString(html_data);
+
+            HtmlNode numbers = document_node.SelectSingleNode("//ul[@class='page-numbers']");
+            foreach (HtmlNode nb_node in numbers.ChildNodes)
+                if (ulong.TryParse(nb_node.InnerText, out ulong tmp))
+                    max = Math.Max(max, tmp);
+        }
+
         return max;
     }
 
     public static ulong MaxPageByQuery(string query) => Task.Run(async () => await MaxPageByQueryAsync(query)).Result;
+
     public static async Task<ulong> MaxPageByQueryAsync(string query)
     {
-        string html_data = await HttpGetAsync(string.Format(_url, $"?s={HttpUtility.UrlEncode(query)}"));
-        HtmlNode document_node = new HtmlDocument().NodeFromRawString(html_data);
-
         ulong max = 1;
-        HtmlNode numbers = document_node.SelectSingleNode("//ul[@class='page-numbers']");
-        if (numbers is null)
-            return max;
 
-        foreach (HtmlNode nb_node in numbers.ChildNodes)
-            if (ulong.TryParse(nb_node.InnerText, out ulong tmp))
-                max = Math.Max(max, tmp);
+        foreach (string url in _urls)
+        {
+            string html_data = await HttpGetAsync(string.Format(url, $"?s={HttpUtility.UrlEncode(query)}"));
+            HtmlNode document_node = new HtmlDocument().NodeFromRawString(html_data);
+
+            HtmlNode numbers = document_node.SelectSingleNode("//ul[@class='page-numbers']");
+            if (numbers is null)
+                return max;
+
+            foreach (HtmlNode nb_node in numbers.ChildNodes)
+                if (ulong.TryParse(nb_node.InnerText, out ulong tmp))
+                    max = Math.Max(max, tmp);
+        }
+
         return max;
     }
 
@@ -52,38 +64,47 @@ public class ArticlesNetwork
     {
         IList<Article> articles = new List<Article>();
 
-        string str = string.Format(_url, $"/page/{page}/?s={HttpUtility.UrlEncode(query)}");
-        string html_data = HttpGet(str, progress_task);
-        var main_node = new HtmlDocument().NodeFromRawString(html_data);
+        foreach (string url in _urls)
+        {
+            string str = string.Format(url, $"/page/{page}/?s={HttpUtility.UrlEncode(query)}");
+            string html_data = HttpGet(str, progress_task);
+            var main_node = new HtmlDocument().NodeFromRawString(html_data);
 
-        var nodes = main_node.SelectNodes("//article");
-        if (nodes is null)
-            return null;
+            var nodes = main_node.SelectNodes("//article");
+            if (nodes is null)
+                return null;
 
-        ParseArticles(nodes, ref articles);
+            ParseArticles(nodes, ref articles);
+        }
+
         return articles;
     }
 
     public static IList<Article> ArticlesByPage(int page) => ArticlesByPageRange(page, page + 1);
+
     public static IList<Article> ArticlesByPageRange(int page_start, int page_end)
     {
         IList<Article> articles = new List<Article>();
         Parallel.For(page_start, page_end, (current_page) =>
         {
-            string html_data = HttpGet(string.Format(_url, $"page/{current_page}/"));
-            var article_nodes = new HtmlDocument().NodeFromRawString(html_data).SelectNodes("//article");
+            foreach (string url in _urls)
+            {
+                string html_data = HttpGet(string.Format(url, $"page/{current_page}/"));
+                var article_nodes = new HtmlDocument().NodeFromRawString(html_data).SelectNodes("//article");
 
-            ParseArticles(article_nodes, ref articles);
+                ParseArticles(article_nodes, ref articles);
+            }
         });
         return articles;
     }
 
     public static Article? ArticleByLink(string link, ProgressTask? progress_task = null) => Task.Run(async () => await ArticleByLinkAsync(link, progress_task)).Result;
+
     public static async Task<Article?> ArticleByLinkAsync(string link, ProgressTask? progress_task = null)
     {
         var response = await _client.GetAsync(link);
         Uri? request_uri = response.RequestMessage!.RequestUri;
-        if (request_uri is null || request_uri.ToString() == "https://www.simplaza.org/")
+        if (request_uri is null || request_uri.ToString() == "https://sceneryaddons.org/")
             return null;
 
         string html_data = await HttpGetAsync(link, progress_task);
@@ -94,25 +115,30 @@ public class ArticlesNetwork
         return ParseArticle(article_node, link);
     }
 
-    public static Article? ArticleByOutdatedLink(string old_link, ProgressTask? progress_task = null) => Task.Run(async () => await ArticleByOutdatedLinkAsync(old_link, progress_task)).Result;
+    public static Article? ArticleByOutdatedLink(string old_link, ProgressTask? progress_task = null) =>
+        Task.Run(async () => await ArticleByOutdatedLinkAsync(old_link, progress_task)).Result;
+
     public static async Task<Article?> ArticleByOutdatedLinkAsync(string old_link, ProgressTask? progress_task = null)
     {
         var response = await _client.GetAsync(old_link);
         Uri? request_uri = response.RequestMessage!.RequestUri;
-        if (request_uri is null || request_uri.ToString() == "https://simplaza.org/")
+        if (request_uri is null || request_uri.ToString() == "https://sceneryaddons.org/")
             return null;
 
         return await ArticleByLinkAsync(request_uri.ToString());
     }
 
-    public static Article.ArticleDetails ArticleDetails(string article_link, ProgressTask? progress_task = null) => Task.Run(async () => await ArticleDetailsAsync(article_link, progress_task)).Result;
+    public static Article.ArticleDetails ArticleDetails(string article_link, ProgressTask? progress_task = null) =>
+        Task.Run(async () => await ArticleDetailsAsync(article_link, progress_task)).Result;
+
     public static async Task<Article.ArticleDetails> ArticleDetailsAsync(string article_link, ProgressTask? progress_task = null)
     {
         HtmlNode article_node1 = new HtmlDocument().NodeFromRawString(await HttpGetAsync(article_link, progress_task));
         HtmlNode article_node = article_node1.SelectSingleNode(".//article");
 
         // Description
-        HtmlNodeCollection possible_description_boxes = article_node.SelectNodes("//div[@class='su-spoiler su-spoiler-style-fancy su-spoiler-icon-plus-square-1 su-spoiler-closed']");
+        HtmlNodeCollection possible_description_boxes =
+            article_node.SelectNodes("//div[@class='su-spoiler su-spoiler-style-fancy su-spoiler-icon-plus-square-1 su-spoiler-closed']");
         string description = string.Empty;
         foreach (var box in possible_description_boxes)
         {
@@ -142,7 +168,7 @@ public class ArticlesNetwork
 
         // Download Link
         string torrent_link = string.Empty;
-        var items = new XmlDocument().GetItems(HttpGet("https://simplaza.org/torrent/rss.xml"));
+        var items = new XmlDocument().GetItems(HttpGet("https://sceneryaddons.org/torrent/rss.xml"));
         for (int i = 0; i < items.Count; i++)
         {
             var item = items[i];
@@ -160,7 +186,7 @@ public class ArticlesNetwork
                 string link = doc.SelectSingleNode("//a").Attributes["href"].Value;
                 if (link != searcheable_link && link != article_link)
                     continue;
-                
+
                 torrent_link = item.SelectSingleNode("enclosure").Attributes["url"].InnerText;
                 break;
             }
@@ -175,6 +201,7 @@ public class ArticlesNetwork
     }
 
     public static string ImageLocalPath(string image_url, ProgressTask? progress_task) => Task.Run(async () => await ImageLocalPathAsync(image_url, progress_task)).Result;
+
     public static async Task<string> ImageLocalPathAsync(string image_url, ProgressTask? progress_task)
     {
         string image_path = AppDomain.CurrentDomain.BaseDirectory + $"images/{image_url.AsSpan(image_url.LastIndexOf("/") + 1)}";
@@ -187,6 +214,7 @@ public class ArticlesNetwork
     }
 
     public static string TorrentLocalPath(Article article, ProgressTask? progress_task = null) => Task.Run(async () => await TorrentLocalPathAsync(article, progress_task)).Result;
+
     public static async Task<string> TorrentLocalPathAsync(Article article, ProgressTask? progress_task = null)
     {
         string download_url = article.Details.Value.DownloadLink;
@@ -199,8 +227,8 @@ public class ArticlesNetwork
 
             await File.WriteAllBytesAsync(torrent_path, file_bytes);
         }
-        else
-            if (progress_task is not null) progress_task.Value = double.MaxValue;
+        else if (progress_task is not null) progress_task.Value = double.MaxValue;
+
         return torrent_path;
     }
 
@@ -244,7 +272,9 @@ public class ArticlesNetwork
                     Details = new Lazy<Article.ArticleDetails>(() => ArticleDetails(link), System.Threading.LazyThreadSafetyMode.PublicationOnly)
                 });
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+            }
         }
     }
 
@@ -268,12 +298,16 @@ public class ArticlesNetwork
                 Details = new Lazy<Article.ArticleDetails>(() => ArticleDetails(link), System.Threading.LazyThreadSafetyMode.PublicationOnly)
             };
         }
-        catch (Exception) { }
+        catch (Exception)
+        {
+        }
+
         return null;
     }
 
     private static string HttpGet(string url, ProgressTask? progress_task = null) => Task.Run(async () => await HttpGetAsync(url, progress_task)).Result;
     private static async Task<string> HttpGetAsync(string url, ProgressTask? progress_task = null) => Encoding.UTF8.GetString(await HttpGetBytesAsync(url, progress_task));
+
     private static async Task<byte[]> HttpGetBytesAsync(string url, ProgressTask? progress_task = null)
     {
         if (progress_task is null)
@@ -297,13 +331,15 @@ public class ArticlesNetwork
                 progress_task.Value = double.MaxValue;
                 break;
             }
+
             await memory_stream.WriteAsync(buffer.AsMemory(0, read_bytes));
             progress_task.Increment(read_bytes);
         }
+
         progress_task.Value = double.MaxValue;
         return memory_stream.ToArray();
     }
 
-    private static readonly string _url = "https://simplaza.org/{0}";
+    private static readonly string[] _urls = ["https://sceneryaddons.org/{0}", "https://simplaza.org/{0}"];
     private static readonly HttpClient _client = new();
 }

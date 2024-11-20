@@ -80,7 +80,7 @@ public class ShowCommand : Command<ShowCommand.Arguments>
         table.AddRow("[maroon]Version: [/]", $"[white]{article.Version}[/]");
         table.AddRow("[purple]Release Date: [/]", $"[grey70]{article.Date.ToShortDateString()} ({article.Date.TimeAgo()})[/]");
         table.AddRow("[teal]Image: [/]", $"[white link={article.ImageUrl}]See in browser[/]");
-        table.AddRow("[aqua]Links: [/]", $"[grey70][link={article.Link}]SimPlaza[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/][/]");
+        table.AddRow("[aqua]Links: [/]", $"[grey70][link={article.Link}]browser[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/][/]");
         table.AddRow("Description: ", $"[white]{article.Details.Value.Description}[/]");
         table.AddRow("[orange3]Info: [/]", $"[grey70]{article.Details.Value.Info}[/]");
         table.HideHeaders().Expand();
