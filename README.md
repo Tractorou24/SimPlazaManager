@@ -1,6 +1,6 @@
 # SimPlaza Manager
 
-![](https://simplaza.org/wp-content/uploads/2022/07/title-dark.png)
+![](https://simplaza.org/wp-content/uploads/2024/10/title-dark.png)
 
 This is a free and open source CLI tool to manage the mods uploaded in SimPlaza for Microsoft Flight Simulator 2020.
 
