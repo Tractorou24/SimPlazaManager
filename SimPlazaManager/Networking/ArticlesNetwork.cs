@@ -5,6 +5,7 @@ using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -81,7 +82,7 @@ public class ArticlesNetwork
     {
         var response = await _client.GetAsync(link);
         Uri? request_uri = response.RequestMessage!.RequestUri;
-        if (request_uri is null || request_uri.ToString() == "https://sceneryaddons.org/")
+        if (request_uri is null || _sources.Any(s => s.Address.Contains(request_uri.ToString())))
             return null;
 
         string html_data = await Networking.HttpGetAsync(link, progress_task);
@@ -99,7 +100,7 @@ public class ArticlesNetwork
     {
         var response = await _client.GetAsync(old_link);
         Uri? request_uri = response.RequestMessage!.RequestUri;
-        if (request_uri is null || request_uri.ToString() == "https://sceneryaddons.org/")
+        if (request_uri is null || _sources.Any(s => s.Address.Contains(request_uri.ToString())))
             return null;
 
         return await ArticleByLinkAsync(request_uri.ToString());
@@ -186,6 +187,9 @@ public class ArticlesNetwork
                 string editor = title[..title.IndexOf(" – ")];
                 string link = article_node.Attributes["href"].Value;
                 string version = new Regex("v(\\d+\\.)?(\\d+\\.)*(\\*|\\d+)( |$)").Match(title).Value;
+                var compatibility = SourceFromLink(link).Compatibility(article);
+                if (!compatibility.Contains(Settings.SimVersion()))
+                    continue;
 
                 articles.Add(new Article()
                 {

@@ -1,4 +1,5 @@
-﻿using HtmlAgilityPack;
+﻿using System.Collections.Generic;
+using HtmlAgilityPack;
 using SimPlazaManager.Extensions;
 using System.Xml;
 
@@ -12,6 +13,7 @@ public interface ISource
     public string Info(HtmlNode article);
     public string Description(HtmlNode article);
     public string Link(HtmlNode article, string article_link);
+    public List<uint> Compatibility(HtmlNode article);
 }
 
 public class SimPlaza : ISource
@@ -80,6 +82,11 @@ public class SimPlaza : ISource
 
         return torrent_link;
     }
+
+    public List<uint> Compatibility(HtmlNode article)
+    {
+        return [2020];
+    }
 }
 
 public class SceneryAddons : ISource
@@ -125,5 +132,15 @@ public class SceneryAddons : ISource
         }
 
         return torrent_link;
+    }
+
+    public List<uint> Compatibility(HtmlNode article)
+    {
+        List<uint> compatibility = [];
+        if (article.InnerText.Contains("MSFS 2020"))
+            compatibility.Add(2020);
+        if (article.InnerText.Contains("MSFS 2024"))
+            compatibility.Add(2024);
+        return compatibility;
     }
 }
