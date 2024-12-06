@@ -1,4 +1,5 @@
-﻿using Spectre.Console;
+﻿using System;
+using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -58,6 +59,21 @@ public class SettingsCommand : Command<SettingsCommand.Arguments>
                 Border = BoxBorder.Rounded
             };
             AnsiConsole.Write(mods_panel);
+
+            TextPath version_path = new(Settings.SimVersion().ToString())
+            {
+                RootStyle = new Style(Color.Red),
+                SeparatorStyle = new Style(Color.Green3_1),
+                StemStyle = new Style(Color.LightYellow3),
+                LeafStyle = new Style(Color.DeepSkyBlue1)
+            };
+
+            Panel sim_version_panel = new (version_path)
+            {
+                Header = new PanelHeader("| MSFS Version |"),
+                Border = BoxBorder.Rounded
+            };
+            AnsiConsole.Write(sim_version_panel);
         }
 
         if (args.Reset)
@@ -71,13 +87,21 @@ public class SettingsCommand : Command<SettingsCommand.Arguments>
             string mods = AnsiConsole.Prompt(
                                     new TextPrompt<string>("Enter [green]Mods Folder[/] full path [grey](empty to stay with old config)[/]:")
                                     .AllowEmpty());
+            uint sim_version = AnsiConsole.Prompt(
+                                    new TextPrompt<uint>("Enter [green]MSFS Version[/] [grey](empty to stay with old config)[/]:")
+                                    .AllowEmpty());
 
             if (community.Length == 0)
                 community = Settings.CommunityFolder();
             if (mods.Length == 0)
                 mods = Settings.ModsFolder();
+            if (sim_version == 0)
+                sim_version = Settings.SimVersion();
 
-            Settings.SetConfig(community, mods);
+            if (sim_version != 2024 && sim_version != 2020)
+                throw new InvalidOperationException("Invalid MSFS version (2020 and 2024 are supported)");
+
+            Settings.SetConfig(community, mods, sim_version);
         }
         return 0;
     }

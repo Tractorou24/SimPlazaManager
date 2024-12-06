@@ -11,10 +11,11 @@ namespace SimPlazaManager;
 
 public static class Settings
 {
-    public static void SetConfig(string community_folder, string mods_folder)
+    public static void SetConfig(string community_folder, string mods_folder, uint sim_version)
     {
         _settings.SelectSingleNode("/Settings/CommunityFolder")!.InnerText = community_folder;
         _settings.SelectSingleNode("/Settings/ModsFolder")!.InnerText = mods_folder;
+        _settings.SelectSingleNode("/Settings/SimVersion")!.InnerText = sim_version.ToString();
         _settings.Save(_settings_path);
     }
 
@@ -22,6 +23,7 @@ public static class Settings
     {
         _settings.SelectSingleNode("/Settings/CommunityFolder")!.InnerText = string.Empty;
         _settings.SelectSingleNode("/Settings/ModsFolder")!.InnerText = string.Empty;
+        _settings.SelectSingleNode("/Settings/SimVersion")!.InnerText = string.Empty;
     }
 
     public static string CommunityFolder()
@@ -38,6 +40,11 @@ public static class Settings
         if (!Directory.Exists(path))
             throw new InvalidOperationException("Mods folder is not set or is an invalid folder");
         return path;
+    }
+
+    public static uint SimVersion()
+    {
+        return uint.Parse(_settings.SelectSingleNode("/Settings/SimVersion")!.InnerText);
     }
 
     public static void AddOrUpdatePackage(Guid package_id, string package_xml)

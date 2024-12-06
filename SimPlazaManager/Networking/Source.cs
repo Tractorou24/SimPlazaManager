@@ -12,6 +12,7 @@ public interface ISource
     public string Info(HtmlNode article);
     public string Description(HtmlNode article);
     public string Link(HtmlNode article, string article_link);
+    public bool Is2024Compatible(HtmlNode article);
 }
 
 public class SimPlaza : ISource
@@ -80,6 +81,11 @@ public class SimPlaza : ISource
 
         return torrent_link;
     }
+
+    public bool Is2024Compatible(HtmlNode article)
+    {
+        throw new System.NotImplementedException();
+    }
 }
 
 public class SceneryAddons : ISource
@@ -125,5 +131,10 @@ public class SceneryAddons : ISource
         }
 
         return torrent_link;
+    }
+
+    public bool Is2024Compatible(HtmlNode article)
+    {
+        throw new System.NotImplementedException();
     }
 }
