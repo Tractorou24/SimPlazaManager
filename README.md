@@ -2,7 +2,8 @@
 
 ![](https://simplaza.org/wp-content/uploads/2022/07/title-dark.png)
 
-This is a free and open source CLI tool to manage the mods uploaded in SimPlaza for Microsoft Flight Simulator 2020.
+This is a free and open source CLI tool to manage the mods uploaded in SimPlaza for Microsoft Flight Simulator 2020 & 2024.  
+It also supports Scenery Addons!
 
 ## Usage
 
@@ -33,6 +34,6 @@ Please discuss your ideas in an issue before working on them.<br>
 Please folow the app code style when contributing to the code directly.
 
 ## Disclaimer
-I am in no way shape or form associated with `simplaza.org`, this is just a tool I made to help automate the process of managing packages for the sim. I am not responsible of anything hosted on the site or you download on it using this app.
+I am in no way shape or form associated with `simplaza.org` or `sceneryaddons.org`, this is just a tool I made to help automate the process of managing packages for the sim. I am not responsible of anything hosted on the site or you download on it using this app.
 
 Please check the license before using this for more information.
