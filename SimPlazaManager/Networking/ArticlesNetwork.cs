@@ -38,7 +38,7 @@ public class ArticlesNetwork
         return max;
     }
 
-    public static IList<Article>? ArticlesByQuery(string query, int page = 1, ProgressTask? progress_task = null)
+    public static IList<Article>? ArticlesByQuery(string query, int page = 1, bool filter = true, ProgressTask? progress_task = null)
     {
         IList<Article> articles = new List<Article>();
 
@@ -52,15 +52,15 @@ public class ArticlesNetwork
             if (nodes is null)
                 continue;
 
-            ParseArticles(nodes, ref articles);
+            ParseArticles(nodes, filter, ref articles);
         }
 
         return articles;
     }
 
-    public static IList<Article> ArticlesByPage(int page) => ArticlesByPageRange(page, page + 1);
+    public static IList<Article> ArticlesByPage(int page, bool filter = true) => ArticlesByPageRange(page, page + 1, filter);
 
-    public static IList<Article> ArticlesByPageRange(int page_start, int page_end)
+    public static IList<Article> ArticlesByPageRange(int page_start, int page_end, bool filter = true)
     {
         IList<Article> articles = new List<Article>();
         Parallel.For(page_start, page_end, (current_page) =>
@@ -70,7 +70,7 @@ public class ArticlesNetwork
                 string html_data = Networking.HttpGet(source.Address + $"/page/{current_page}/");
                 var article_nodes = new HtmlDocument().NodeFromRawString(html_data).SelectNodes("//article");
 
-                ParseArticles(article_nodes, ref articles);
+                ParseArticles(article_nodes, filter, ref articles);
             }
         });
         return articles;
@@ -175,7 +175,7 @@ public class ArticlesNetwork
         return new Tuple<int, Article?>(2, null);
     }
 
-    private static void ParseArticles(HtmlNodeCollection article_nodes, ref IList<Article> articles)
+    private static void ParseArticles(HtmlNodeCollection article_nodes, bool filter, ref IList<Article> articles)
     {
         foreach (HtmlNode article in article_nodes)
         {
@@ -188,7 +188,7 @@ public class ArticlesNetwork
                 string link = article_node.Attributes["href"].Value;
                 string version = new Regex("v(\\d+\\.)?(\\d+\\.)*(\\*|\\d+)( |$)").Match(title).Value;
                 var compatibility = SourceFromLink(link).Compatibility(article);
-                if (!compatibility.Contains(Settings.SimVersion()))
+                if (!compatibility.Contains(Settings.SimVersion()) && filter)
                     continue;
 
                 articles.Add(new Article()

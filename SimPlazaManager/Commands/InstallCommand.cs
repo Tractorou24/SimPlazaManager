@@ -23,6 +23,10 @@ public class InstallCommand : Command<InstallCommand.Arguments>
         [CommandArgument(0, "<QUERY/LINK>")]
         [Description("The queries or links used to search for packages")]
         public string Query { get; set; } = string.Empty;
+
+        [CommandOption("-f|--force")]
+        [Description("Disable simulator version filter")]
+        public bool Force { get; set; }
     }
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Arguments args)
@@ -48,7 +52,7 @@ public class InstallCommand : Command<InstallCommand.Arguments>
                 if (args.Query.StartsWith("https://sceneryaddons.org"))
                     article = ArticlesNetwork.ArticleByLink(args.Query, get_article);
                 else
-                    possibilities = ArticlesNetwork.ArticlesByQuery(args.Query, progress_task: get_article);
+                    possibilities = ArticlesNetwork.ArticlesByQuery(args.Query, 1, !args.Force, progress_task: get_article);
                 get_article.StopTask();
             });
 

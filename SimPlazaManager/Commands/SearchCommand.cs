@@ -32,6 +32,10 @@ public class SearchCommand : Command<SearchCommand.Arguments>
         [Description("Filter results by name")]
         [DefaultValue(false)]
         public bool Name { get; set; }
+
+        [CommandOption("-f|--force")]
+        [Description("Disable simulator version filter")]
+        public bool Force { get; set; }
     }
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Arguments args)
@@ -42,18 +46,19 @@ public class SearchCommand : Command<SearchCommand.Arguments>
         if (args.Query.Length != 0)
         {
             var max_page = ArticlesNetwork.MaxPageByQuery(args.Query);
-            var tmp_articles = ArticlesNetwork.ArticlesByQuery(args.Query, args.Page);
+            var tmp_articles = ArticlesNetwork.ArticlesByQuery(args.Query, args.Page, !args.Force);
             if (tmp_articles is null || tmp_articles.Count == 0)
             {
                 AnsiConsole.MarkupLine($"[bold red]No results[/] for '{args.Query}'. Try again with another query !");
                 return 1;
             }
+
             print_next_page = max_page > 1 && args.Page <= 1;
             articles = tmp_articles;
         }
         else
         {
-            articles = ArticlesNetwork.ArticlesByPage(args.Page);
+            articles = ArticlesNetwork.ArticlesByPage(args.Page, !args.Force);
             print_next_page = true;
         }
 
@@ -77,7 +82,8 @@ public class SearchCommand : Command<SearchCommand.Arguments>
 
         table.Columns[3].NoWrap();
         foreach (var article in articles)
-            table.AddRow(article.Editor, article.Name, article.Version.ToString(), $"Open in [link={article.Link}]browser[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/]");
+            table.AddRow(article.Editor, article.Name, article.Version.ToString(),
+                $"Open in [link={article.Link}]browser[/] | [link=https://www.google.com/maps/search/{HttpUtility.UrlEncode(article.Name)}]Google Maps[/]");
         table.Expand();
 
         AnsiConsole.Write(table);
