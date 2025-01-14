@@ -96,7 +96,8 @@ public class SceneryAddons : ISource
 
     public string Info(HtmlNode article)
     {
-        return article.SelectSingleNode("//div[@class='scad-info']").InnerText;
+        var info = article.SelectSingleNode("//div[@class='scad-info']");
+        return info is null ? string.Empty : info.InnerText;
     }
 
     public string Description(HtmlNode article)
