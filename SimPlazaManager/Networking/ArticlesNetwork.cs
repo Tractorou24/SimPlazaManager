@@ -160,7 +160,6 @@ public class ArticlesNetwork
         return torrent_path;
     }
 
-
     public static Tuple<int, Article?> CheckUpdate(Article old_article)
     {
         var article = ArticleByOutdatedLink(old_article.Link);

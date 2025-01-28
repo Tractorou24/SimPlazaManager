@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using HtmlAgilityPack;
 using SimPlazaManager.Extensions;
-using System.Xml;
 
 namespace SimPlazaManager.Networking;
 
@@ -55,32 +56,20 @@ public class SimPlaza : ISource
 
     public string Link(HtmlNode article, string article_link)
     {
-        string torrent_link = string.Empty;
-        var items = new XmlDocument().GetItems(Networking.HttpGet("https://simplaza.org/torrent/rss-sp-only.xml"));
-        for (int i = 0; i < items.Count; i++)
-        {
-            var item = items[i];
-            if (item is null)
-                continue;
+        var allBoxes = article.SelectNodes("//div[@class='su-box su-box-style-default']");
+        var filteredBoxes = allBoxes.Where(b => b.SelectSingleNode("div[@class='su-box-title']").InnerText == "Torrent").ToArray();
+        if (filteredBoxes.Length is 0 or > 1)
+            throw new Exception($"Cannot find single torrent box (count: {filteredBoxes.Length} in {article_link}");
 
-            string searchable_link = article_link;
-            if (searchable_link.EndsWith('/'))
-                searchable_link = article_link[..^1];
+        string? webLink = filteredBoxes[0].SelectSingleNode("div[@class='su-box-content su-u-clearfix su-u-trim']//a").Attributes["href"].Value;
+        if (webLink is null)
+            return "";
 
-            if (item.InnerXml.Contains(searchable_link))
-            {
-                HtmlNode doc = new HtmlDocument().NodeFromRawString(item.SelectSingleNode("description").InnerText);
-
-                string link = doc.SelectSingleNode("//a").Attributes["href"].Value;
-                if (link != searchable_link && link != article_link)
-                    continue;
-
-                torrent_link = item.SelectSingleNode("enclosure").Attributes["url"].InnerText;
-                break;
-            }
-        }
-
-        return torrent_link;
+        webLink = webLink.Replace("&#038;", "&");
+        string content = Networking.HttpGet(webLink);
+        var doc = new HtmlDocument().NodeFromRawString(content);
+        var button = doc.SelectSingleNode("//button");
+        return button is null ? "" : button.Attributes["value"].Value;
     }
 
     public List<uint> Compatibility(HtmlNode article)
@@ -105,34 +94,18 @@ public class SceneryAddons : ISource
         return article.SelectSingleNode("//div[@class='scad-description']").InnerText;
     }
 
-    public string Link(HtmlNode article, string article_link)
+    public string Link(HtmlNode article, string articleLink)
     {
-        string torrent_link = string.Empty;
-        var items = new XmlDocument().GetItems(Networking.HttpGet("https://sceneryaddons.org/torrent/rss.xml"));
-        for (int i = 0; i < items.Count; i++)
-        {
-            var item = items[i];
-            if (item is null)
-                continue;
+        var box = article.SelectSingleNode("//div[@class='scad-dl-torrent']");
+        string? webLink = box.SelectSingleNode("a").Attributes["href"].Value;
+        if (webLink is null)
+            return "";
 
-            string searchable_link = article_link;
-            if (searchable_link.EndsWith('/'))
-                searchable_link = article_link[..^1];
-
-            if (item.InnerXml.Contains(searchable_link))
-            {
-                HtmlNode doc = new HtmlDocument().NodeFromRawString(item.SelectSingleNode("description").InnerText);
-
-                string link = doc.SelectSingleNode("//a").Attributes["href"].Value;
-                if (link != searchable_link && link != article_link)
-                    continue;
-
-                torrent_link = item.SelectSingleNode("link").InnerText;
-                break;
-            }
-        }
-
-        return torrent_link;
+        webLink = webLink.Replace("&#038;", "&");
+        string content = Networking.HttpGet(webLink);
+        var doc = new HtmlDocument().NodeFromRawString(content);
+        var button = doc.SelectSingleNode("//button");
+        return button is null ? "" : button.Attributes["value"].Value;
     }
 
     public List<uint> Compatibility(HtmlNode article)
